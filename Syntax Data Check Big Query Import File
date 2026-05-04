@@ -1,0 +1,6 @@
+#Query Syntax Apakah 4 File Dataset Sudah Masuk Dataset Google Big Query
+SELECT COUNT(*) FROM `propane-shell-494110-e4.rakamin_project.kf_final_transaction`;
+SELECT COUNT(*) FROM `propane-shell-494110-e4.rakamin_project.kf_inventory`;
+SELECT COUNT(*) FROM `propane-shell-494110-e4.rakamin_project.kf_kantor_cabang`;
+SELECT COUNT(*) FROM `propane-shell-494110-e4.rakamin_project.kf_product`;
+
