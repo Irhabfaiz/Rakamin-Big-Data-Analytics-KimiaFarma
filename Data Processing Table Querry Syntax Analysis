@@ -1,0 +1,75 @@
+CREATE OR REPLACE TABLE `propane-shell-494110-e4.rakamin_project.tabel_analisa` AS
+WITH transaksi AS (
+  SELECT
+    *,
+    CASE
+      WHEN discount_percentage > 1 THEN discount_percentage / 100
+      ELSE discount_percentage
+    END AS discount_rate
+  FROM `propane-shell-494110-e4.rakamin_project.kf_final_transaction`
+),
+
+inventory AS (
+  SELECT
+    branch_id,
+    product_id,
+    product_name,
+    SUM(opname_stock) AS total_stock
+  FROM `propane-shell-494110-e4.rakamin_project.kf_inventory`
+  GROUP BY branch_id, product_id, product_name
+),
+
+base AS (
+  SELECT
+    ft.transaction_id,
+    ft.date,
+    ft.branch_id,
+    kc.branch_name,
+    kc.kota,
+    kc.provinsi,
+    kc.rating AS rating_cabang,
+    ft.customer_name,
+    ft.product_id,
+    p.product_name,
+    ft.price AS actual_price,
+    ft.discount_percentage,
+
+    CASE
+      WHEN ft.price <= 50000 THEN 0.10
+      WHEN ft.price > 50000 AND ft.price <= 100000 THEN 0.15
+      WHEN ft.price > 100000 AND ft.price <= 300000 THEN 0.20
+      WHEN ft.price > 300000 AND ft.price <= 500000 THEN 0.25
+      WHEN ft.price > 500000 THEN 0.30
+    END AS persentase_gross_laba,
+
+    ft.price - (ft.price * ft.discount_rate) AS nett_sales,
+    ft.rating AS rating_transaksi
+
+  FROM transaksi AS ft
+  LEFT JOIN `propane-shell-494110-e4.rakamin_project.kf_kantor_cabang` AS kc
+    ON ft.branch_id = kc.branch_id
+  LEFT JOIN `propane-shell-494110-e4.rakamin_project.kf_product` AS p
+    ON ft.product_id = p.product_id
+  LEFT JOIN inventory AS i
+    ON ft.branch_id = i.branch_id
+    AND ft.product_id = i.product_id
+)
+
+SELECT
+  transaction_id,
+  date,
+  branch_id,
+  branch_name,
+  kota,
+  provinsi,
+  rating_cabang,
+  customer_name,
+  product_id,
+  product_name,
+  actual_price,
+  discount_percentage,
+  persentase_gross_laba,
+  nett_sales,
+  nett_sales * persentase_gross_laba AS nett_profit,
+  rating_transaksi
+FROM base;
